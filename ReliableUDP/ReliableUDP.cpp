@@ -207,6 +207,8 @@ int main(int argc, char* argv[])
 		{
 			unsigned char packet[PacketSize];
 			memset(packet, 0, sizeof(packet));
+			static int n = 0;
+			sprintf_s((char*)packet, PacketSize, "Hello World %d\n", ++n);
 			connection.SendPacket(packet, sizeof(packet));
 			sendAccumulator -= 1.0f / sendRate;
 		}
@@ -217,6 +219,7 @@ int main(int argc, char* argv[])
 			int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
 			if (bytes_read == 0)
 				break;
+			printf("%s", packet);
 		}
 
 		// show packets that were acked this frame
