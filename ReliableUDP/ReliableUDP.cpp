@@ -129,6 +129,7 @@ int main(int argc, char* argv[])
 	Mode mode = Server;
 	Address address;
 
+	// TODO: Retrieving additional command line arguments
 	if (argc >= 2)
 	{
 		int a, b, c, d;
@@ -159,6 +160,7 @@ int main(int argc, char* argv[])
 	}
 
 	if (mode == Client)
+		// TODO: Retrieving the file from disk
 		connection.Connect(address);
 	else
 		connection.Listen();
@@ -198,13 +200,17 @@ int main(int argc, char* argv[])
 			printf("connection failed\n");
 			break;
 		}
-
+		// TODO: Sending file metadata
+		
+		// TODO: Breaking the file in pieces to send
+		
 		// send and receive packets
 
 		sendAccumulator += DeltaTime;
 
 		while (sendAccumulator > 1.0f / sendRate)
 		{
+			// TODO: Sending the pieces
 			unsigned char packet[PacketSize];
 			memset(packet, 0, sizeof(packet));
 			static int n = 0;
@@ -216,7 +222,13 @@ int main(int argc, char* argv[])
 		while (true)
 		{
 			unsigned char packet[256];
+			// TODO: Receiving the file metadata
+
 			int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
+			// TODO: Receiving the file pieces
+
+			// TODO: Writing the pieces out to disk
+
 			if (bytes_read == 0)
 				break;
 			printf("%s", packet);
@@ -263,6 +275,8 @@ int main(int argc, char* argv[])
 
 			statsAccumulator -= 0.25f;
 		}
+
+		// TODO: Verifying the file integrity
 
 		net::wait(DeltaTime);
 	}
