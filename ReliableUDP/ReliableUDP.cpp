@@ -138,6 +138,26 @@ int main(int argc, char* argv[])
 		{
 			mode = Client;
 			address = Address(a, b, c, d, ServerPort);
+
+			// Check if the filename was provided
+			if (argc >= 3)
+			{
+				const char* filename = argv[2];
+				FILE* fp = fopen(filename, "rb");
+				if (!fp)
+				{
+					printf("Error: Could not open file %s\n", filename);
+					return 1;
+				}
+
+				printf("Selected file for transfer: %s\n", filename);
+			}
+			else
+			{
+				printf("Error: Missing filename\n");
+				printf("Usage: %s <ip_address> <filename>\n", argv[0]);
+				return 1;
+			}
 		}
 	}
 
