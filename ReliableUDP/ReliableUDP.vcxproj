@@ -132,6 +132,7 @@
   <ItemGroup>
     <ClInclude Include="Net.h" />
     <ClInclude Include="Protocol.h" />
+    <ClInclude Include="Utilities.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
