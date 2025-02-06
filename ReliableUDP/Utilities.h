@@ -47,7 +47,10 @@ std::vector<FileSlice> LoadFileIntoSlices(const char* filename)
 	return slices;
 }
 
-bool SaveFile(const char* filename, const unsigned char* data, size_t size);
+void CombineSlicesIntoFile(const char* filename, const std::vector<FileSlice>& slices)
+{
+	
+}
 
 bool SendFile(const unsigned char* data);
 

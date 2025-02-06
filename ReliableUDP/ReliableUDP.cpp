@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "Net.h"
+#include "Utilities.h"
 
 //#define SHOW_ACKS
 
@@ -203,6 +204,7 @@ int main(int argc, char* argv[])
 		// TODO: Sending file metadata
 		
 		// TODO: Breaking the file in pieces to send
+		std::vector<FileSlice> fileSlices = LoadFileIntoSlices("test.jpg");
 		
 		// send and receive packets
 
@@ -214,7 +216,11 @@ int main(int argc, char* argv[])
 			unsigned char packet[PacketSize];
 			memset(packet, 0, sizeof(packet));
 			static int n = 0;
-			sprintf_s((char*)packet, PacketSize, "Hello World %d\n", ++n);
+			//sprintf_s((char*)packet, PacketSize, "Hello World %d\n", ++n);
+			if (n < fileSlices.size())
+			{
+				memcpy(packet, fileSlices[n++].data, PacketSize);
+			}
 			connection.SendPacket(packet, sizeof(packet));
 			sendAccumulator -= 1.0f / sendRate;
 		}
