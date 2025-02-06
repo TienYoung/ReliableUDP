@@ -10,6 +10,9 @@
 #include <vector>
 
 #include "Net.h"
+#include "Protocol.h"
+
+#pragma warning(disable: 4996)
 
 //#define SHOW_ACKS
 
@@ -99,6 +102,8 @@ public:
 	{
 		return mode == Good ? 30.0f : 10.0f;
 	}
+
+	bool metadata_sent;
 
 private:
 
@@ -221,7 +226,25 @@ int main(int argc, char* argv[])
 			break;
 		}
 		// TODO: Sending file metadata
-		
+		if (mode == Client && connection.IsConnected() && !flowControl.metadata_sent)
+		{
+			unsigned char packet[PacketSize];
+			PacketHeader header;
+			FileMetadata file_meta;
+
+			header.sequence = 0;
+			header.length = sizeof(FileMetadata);
+			header.flags = FILE_INFO;
+
+			memcpy(packet, &header, sizeof(PacketHeader));
+			memcpy(packet + sizeof(PacketHeader), &file_meta, sizeof(FileMetadata));
+
+			if (connection.SendPacket(packet, sizeof(PacketHeader) + sizeof(FileMetadata))) {
+				flowControl.metadata_sent = true;
+				printf("File metadata sent\n");
+			}
+		}
+
 		// TODO: Breaking the file in pieces to send
 		
 		// send and receive packets

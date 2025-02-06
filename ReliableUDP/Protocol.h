@@ -10,13 +10,18 @@ enum PacketType {
     FILE_DATA,
     ACK,
     MD5_CHECK,
-    ERROR
+    ERROR_PACKET
 };
 
 struct PacketHeader {
     uint32_t sequence;
     uint16_t length;
     uint16_t flags;
+};
+
+struct FileMetadata {
+    char filename[MAX_FILENAME_LENGTH];
+    uint32_t filesize;
 };
 
 #endif
