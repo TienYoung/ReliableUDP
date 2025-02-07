@@ -172,6 +172,8 @@ int main(int argc, char* argv[])
 
 	FlowControl flowControl;
 
+	std::vector<FileSlice> fileSlices;
+
 	while (true)
 	{
 		// update flow control
@@ -194,6 +196,11 @@ int main(int argc, char* argv[])
 		{
 			printf("client connected to server\n");
 			connected = true;
+			// TODO: Breaking the file in pieces to send
+			if (mode == Client)
+			{
+				fileSlices = LoadFileIntoSlices("./test.jpg");
+			}
 		}
 
 		if (!connected && connection.ConnectFailed())
@@ -202,10 +209,7 @@ int main(int argc, char* argv[])
 			break;
 		}
 		// TODO: Sending file metadata
-		
-		// TODO: Breaking the file in pieces to send
-		std::vector<FileSlice> fileSlices = LoadFileIntoSlices("test.jpg");
-		
+				
 		// send and receive packets
 
 		sendAccumulator += DeltaTime;
@@ -217,9 +221,13 @@ int main(int argc, char* argv[])
 			memset(packet, 0, sizeof(packet));
 			static int n = 0;
 			//sprintf_s((char*)packet, PacketSize, "Hello World %d\n", ++n);
-			if (n < fileSlices.size())
+			if (mode == Client)
 			{
-				memcpy(packet, fileSlices[n++].data, PacketSize);
+				if (n < fileSlices.size())
+				{
+					printf("Sending %d/%d\n", fileSlices[n].id, fileSlices[n].number);
+					memcpy(packet, &fileSlices[n++], PacketSize);
+				}
 			}
 			connection.SendPacket(packet, sizeof(packet));
 			sendAccumulator -= 1.0f / sendRate;
@@ -237,7 +245,25 @@ int main(int argc, char* argv[])
 
 			if (bytes_read == 0)
 				break;
-			printf("%s", packet);
+			//printf("%s", packet);
+			if (mode == Server)
+			{
+				FileSlice* slice = reinterpret_cast<FileSlice*>(packet);
+				if (slice->number == 0)
+				{
+					continue;
+				}
+				if (slice->id == fileSlices.size())
+				{
+					fileSlices.push_back(*slice);
+					printf("Receiving!\n");
+				}
+				if (slice->id == slice->number - 1)
+				{
+					CombineSlicesIntoFile("./test.jpg", fileSlices);
+					printf("Completed!\n");
+				}
+			}
 		}
 
 		// show packets that were acked this frame

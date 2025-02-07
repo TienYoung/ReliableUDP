@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 
@@ -17,7 +18,13 @@ struct FileSlice
 
 std::vector<FileSlice> LoadFileIntoSlices(const char* filename)
 {
-	std::fstream file(filename, std::ios::binary | std::ios::ate);
+	if (!std::filesystem::exists(filename))
+	{
+		std::cerr << "Error Not exists: " << filename << std::endl;
+		return std::vector<FileSlice>();
+	}
+	
+	std::ifstream file(filename, std::ios::binary | std::ios::ate);
 	if (!file)
 	{
 		std::cerr << "Error Opening: " << filename << std::endl;
@@ -49,7 +56,12 @@ std::vector<FileSlice> LoadFileIntoSlices(const char* filename)
 
 void CombineSlicesIntoFile(const char* filename, const std::vector<FileSlice>& slices)
 {
-	
+	std::ofstream file(filename, std::ios::binary);
+	for (size_t i = 0; i < slices.size(); i++)
+	{
+		file.write(slices[i].data, slices[i].size);
+	}
+	file.close();
 }
 
 bool SendFile(const unsigned char* data);
