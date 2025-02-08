@@ -172,7 +172,8 @@ int main(int argc, char* argv[])
 
 	FlowControl flowControl;
 
-	std::vector<FileSlice> fileSlices;
+	FileSlices fileSlices;
+	bool fileLoaded = false;
 
 	while (true)
 	{
@@ -196,10 +197,10 @@ int main(int argc, char* argv[])
 		{
 			printf("client connected to server\n");
 			connected = true;
-			// TODO: Breaking the file in pieces to send
+			// A1: Breaking the file in pieces to send
 			if (mode == Client)
 			{
-				fileSlices = LoadFileIntoSlices("./test.jpg");
+				fileLoaded = fileSlices.Load("./Smiley.png");
 			}
 		}
 
@@ -216,17 +217,27 @@ int main(int argc, char* argv[])
 
 		while (sendAccumulator > 1.0f / sendRate)
 		{
-			// TODO: Sending the pieces
+			// A1: Sending the pieces
 			unsigned char packet[PacketSize];
 			memset(packet, 0, sizeof(packet));
 			static int n = 0;
 			//sprintf_s((char*)packet, PacketSize, "Hello World %d\n", ++n);
-			if (mode == Client)
+			if (mode == Client && fileLoaded)
 			{
-				if (n < fileSlices.size())
+				static bool metaSent = false;
+				if (metaSent == false)
 				{
-					printf("Sending %d/%d\n", fileSlices[n].id, fileSlices[n].number);
-					memcpy(packet, &fileSlices[n++], PacketSize);
+					printf("Sending %s, %lld bytes, %lld in total slices.\n", fileSlices.GetMeta()->filename, fileSlices.GetMeta()->fileSize, fileSlices.GetMeta()->totalSlices);
+					memcpy(packet, fileSlices.GetMeta(), PacketSize);
+					metaSent = true;
+				}
+				else
+				{
+					if (n < fileSlices.GetTotal())
+					{
+						printf("Sending %lld/%lld\n", fileSlices.GetSlice(n)->id + 1, fileSlices.GetMeta()->totalSlices);
+						memcpy(packet, fileSlices.GetSlice(n++), PacketSize);
+					}
 				}
 			}
 			connection.SendPacket(packet, sizeof(packet));
@@ -248,20 +259,20 @@ int main(int argc, char* argv[])
 			//printf("%s", packet);
 			if (mode == Server)
 			{
-				FileSlice* slice = reinterpret_cast<FileSlice*>(packet);
-				if (slice->number == 0)
+				if (!fileSlices.IsRead())
 				{
-					continue;
-				}
-				if (slice->id == fileSlices.size())
-				{
-					fileSlices.push_back(*slice);
 					printf("Receiving!\n");
+					fileSlices.Deserialize(packet);
 				}
-				if (slice->id == slice->number - 1)
+				else
 				{
-					CombineSlicesIntoFile("./test.jpg", fileSlices);
-					printf("Completed!\n");
+					static bool saved = false;
+					if (!saved && fileSlices.Verify())
+					{
+						printf("Completed!\n");
+						fileSlices.Save();
+						saved = true;
+					}
 				}
 			}
 		}
