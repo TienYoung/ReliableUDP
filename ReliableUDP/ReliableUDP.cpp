@@ -199,8 +199,9 @@ int main(int argc, char* argv[])
 
 	FileSlices fileSlices;
 	bool fileLoaded = false;
+	bool done = false;
 
-	while (true)
+	while (!done)
 	{
 		// update flow control
 
@@ -253,7 +254,7 @@ int main(int argc, char* argv[])
 				static bool metaSent = false;
 				if (metaSent == false)
 				{
-					printf("Sending %s, %lld bytes, %lld in total slices.\n", fileSlices.GetMeta()->filename, fileSlices.GetMeta()->fileSize, fileSlices.GetMeta()->totalSlices);
+					std::cout << std::format("Sending {}, {} bytes, {} in total slices.\n", fileSlices.GetMeta()->filename, fileSlices.GetMeta()->fileSize, fileSlices.GetMeta()->totalSlices);
 					memcpy(packet, fileSlices.GetMeta(), PacketSize);
 					metaSent = true;
 				}
@@ -261,8 +262,13 @@ int main(int argc, char* argv[])
 				{
 					if (n < fileSlices.GetTotal())
 					{
-						printf("Sending %lld/%lld\n", fileSlices.GetSlice(n)->id + 1, fileSlices.GetMeta()->totalSlices);
+						std::cout << std::format("Sending {}/{}\n", fileSlices.GetSlice(n)->id + 1, fileSlices.GetMeta()->totalSlices);
 						memcpy(packet, fileSlices.GetSlice(n++), PacketSize);
+					}
+					else
+					{
+						std::cout << std::format("Sent file: {}\n", filename);
+						done = true;
 					}
 				}
 			}

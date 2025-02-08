@@ -161,13 +161,7 @@ public:
 	}
 
 private:
-	bool m_ready;
-	PacketMeta m_meta;
+	bool m_ready = false;
+	PacketMeta m_meta = { 0 };
 	std::vector<PacketSlice> m_slices;
 };
-
-//
-//bool SendFile(const unsigned char* data);
-//
-//bool ReceiveFile(unsigned char** data);
-//
