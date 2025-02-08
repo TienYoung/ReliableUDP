@@ -12,8 +12,6 @@
 #include "Net.h"
 #include "Utilities.h"
 
-#pragma warning(disable: 4996)
-
 //#define SHOW_ACKS
 
 using namespace std;
@@ -133,13 +131,13 @@ int main(int argc, char* argv[])
 
 	Mode mode = Server;
 	Address address;
+	const char* filename = nullptr;
 
-	// TODO: Retrieving additional command line arguments
+	// A1: Retrieving additional command line arguments
 	if (argc >= 2)
 	{
 		int a, b, c, d;
-#pragma warning(suppress : 4996) 
-		if (sscanf(argv[1], "%d.%d.%d.%d", &a, &b, &c, &d))
+		if (sscanf_s(argv[1], "%d.%d.%d.%d", &a, &b, &c, &d))
 		{
 			mode = Client;
 			address = Address(a, b, c, d, ServerPort);
@@ -147,21 +145,21 @@ int main(int argc, char* argv[])
 			// Check if the filename was provided
 			if (argc >= 3)
 			{
-				const char* filename = argv[2];
-				FILE* fp = fopen(filename, "rb");
-				if (!fp)
+				// A1: Retrieving the file from disk
+				filename = argv[2];
+				if (!std::filesystem::exists(filename))
 				{
-					printf("Error: Could not open file %s\n", filename);
-					return 1;
+					std::cerr << "Error: Could not open file" << filename << std::endl;
+					return EXIT_FAILURE;
 				}
 
-				printf("Selected file for transfer: %s\n", filename);
+				std::cerr << "Selected file for transfer:" << filename << std::endl;
 			}
 			else
 			{
-				printf("Error: Missing filename\n");
-				printf("Usage: %s <ip_address> <filename>\n", argv[0]);
-				return 1;
+				std::cerr << "Error: Missing filename" << std::endl;
+				std::cerr << "Usage: " << argv[0] << " <ip_address> <filename>" << std::endl;
+				return EXIT_FAILURE;
 			}
 		}
 	}
@@ -185,7 +183,6 @@ int main(int argc, char* argv[])
 	}
 
 	if (mode == Client)
-		// TODO: Retrieving the file from disk
 		connection.Connect(address);
 	else
 		connection.Listen();
@@ -225,10 +222,11 @@ int main(int argc, char* argv[])
 		{
 			printf("client connected to server\n");
 			connected = true;
+			
 			// A1: Breaking the file in pieces to send
 			if (mode == Client)
 			{
-				fileLoaded = fileSlices.Load("./Smiley.png");
+				fileLoaded = fileSlices.Load(filename);
 			}
 		}
 
@@ -237,9 +235,6 @@ int main(int argc, char* argv[])
 			printf("connection failed\n");
 			break;
 		}
-		// TODO: Sending file metadata
-		
-		// TODO: Breaking the file in pieces to send
 		
 		// send and receive packets
 
@@ -254,6 +249,7 @@ int main(int argc, char* argv[])
 			//sprintf_s((char*)packet, PacketSize, "Hello World %d\n", ++n);
 			if (mode == Client && fileLoaded)
 			{
+				// A1: Sending file metadata
 				static bool metaSent = false;
 				if (metaSent == false)
 				{
@@ -277,12 +273,8 @@ int main(int argc, char* argv[])
 		while (true)
 		{
 			unsigned char packet[256];
-			// TODO: Receiving the file metadata
 
 			int bytes_read = connection.ReceivePacket(packet, sizeof(packet));
-			// TODO: Receiving the file pieces
-
-			// TODO: Writing the pieces out to disk
 
 			if (bytes_read == 0)
 				break;
@@ -302,6 +294,7 @@ int main(int argc, char* argv[])
 				}
 				else
 				{
+					// A1: Verifying the file integrity
 					static bool saved = false;
 					if (!saved && fileSlices.Verify())
 					{
@@ -367,7 +360,7 @@ int main(int argc, char* argv[])
 			statsAccumulator -= 0.25f;
 		}
 
-		// TODO: Verifying the file integrity
+		
 
 		net::wait(DeltaTime);
 	}

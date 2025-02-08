@@ -15,12 +15,7 @@ class FileSlices
 public:
 	bool Load(const char* filename)
 	{
-		if (!std::filesystem::exists(filename))
-		{
-			std::cerr << "Error: File Not exists! " << filename << std::endl;
-			return false;
-		}
-
+		assert(filename != nullptr);
 		std::ifstream file(filename, std::ios::binary | std::ios::ate);
 		if (!file)
 		{
@@ -100,6 +95,7 @@ public:
 				size = m_meta.fileSize - DATA_SIZE * (m_meta.totalSlices - 1);
 			}
 
+			// A1: Writing the pieces out to disk
 			file.write(m_slices[i].data, size);
 		}
 		file.close();
@@ -136,6 +132,7 @@ public:
 	void Deserialize(const unsigned char* data)
 	{
 		PacketType typeFlag = static_cast<PacketType>(data[0]);
+		// A1: Receiving the file metadata
 		if (typeFlag == TYPE_META)
 		{
 			const PacketMeta* meta = reinterpret_cast<const PacketMeta*>(data);
@@ -147,6 +144,7 @@ public:
 
 			m_slices.resize(m_meta.totalSlices);
 		}
+		// A1: Receiving the file pieces
 		else if (typeFlag == TYPE_DATA)
 		{
 			const PacketSlice* slice = reinterpret_cast<const PacketSlice*>(data);
