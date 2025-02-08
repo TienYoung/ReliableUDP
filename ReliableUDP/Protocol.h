@@ -7,8 +7,8 @@
 #define MAX_FILENAME_LENGTH 200
 #define MD5_HASH_LENGTH     16
 
-#define PADDING_SIZE        PACKET_SIZE - 1 - MAX_FILENAME_LENGTH - 8 * 2 - MD5_HASH_LENGTH
-#define DATA_SIZE           PACKET_SIZE - 1 - 8
+#define PADDING_SIZE        (PACKET_SIZE - 1 - MAX_FILENAME_LENGTH - 8 * 2 - MD5_HASH_LENGTH)
+#define DATA_SIZE           (PACKET_SIZE - 1 - 8)
 
 enum PacketType : uint8_t {
     TYPE_META = 0x01, // 0000 0001
