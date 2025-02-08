@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <cstdio>
+#include <chrono>
 
 #include "Protocol.h"
 #include "md5.h"

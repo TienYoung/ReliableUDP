@@ -12,6 +12,8 @@
 #include "Net.h"
 #include "Utilities.h"
 
+#pragma warning(disable: 4996)
+
 //#define SHOW_ACKS
 
 using namespace std;
@@ -101,6 +103,8 @@ public:
 		return mode == Good ? 30.0f : 10.0f;
 	}
 
+	bool metadata_sent;
+
 private:
 
 	enum Mode
@@ -139,6 +143,26 @@ int main(int argc, char* argv[])
 		{
 			mode = Client;
 			address = Address(a, b, c, d, ServerPort);
+
+			// Check if the filename was provided
+			if (argc >= 3)
+			{
+				const char* filename = argv[2];
+				FILE* fp = fopen(filename, "rb");
+				if (!fp)
+				{
+					printf("Error: Could not open file %s\n", filename);
+					return 1;
+				}
+
+				printf("Selected file for transfer: %s\n", filename);
+			}
+			else
+			{
+				printf("Error: Missing filename\n");
+				printf("Usage: %s <ip_address> <filename>\n", argv[0]);
+				return 1;
+			}
 		}
 	}
 
@@ -169,6 +193,10 @@ int main(int argc, char* argv[])
 	bool connected = false;
 	float sendAccumulator = 0.0f;
 	float statsAccumulator = 0.0f;
+
+	auto transferStartTime = std::chrono::high_resolution_clock::now();
+	bool transferStarted = false;
+	bool transferDone = false;
 
 	FlowControl flowControl;
 
@@ -210,7 +238,9 @@ int main(int argc, char* argv[])
 			break;
 		}
 		// TODO: Sending file metadata
-				
+		
+		// TODO: Breaking the file in pieces to send
+		
 		// send and receive packets
 
 		sendAccumulator += DeltaTime;
@@ -263,13 +293,31 @@ int main(int argc, char* argv[])
 				{
 					printf("Receiving!\n");
 					fileSlices.Deserialize(packet);
+
+					// Record the start time of receiving
+					if (!transferStarted) {
+						transferStartTime = std::chrono::high_resolution_clock::now();
+						transferStarted = true;
+					}
 				}
 				else
 				{
 					static bool saved = false;
 					if (!saved && fileSlices.Verify())
 					{
-						printf("Completed!\n");
+						auto transferEndTime = std::chrono::high_resolution_clock::now();
+						auto transferDuration = std::chrono::duration_cast<std::chrono::milliseconds>(transferEndTime - transferStartTime);
+
+						double transferSeconds = transferDuration.count() / 1000.0;
+						// Calculate file size in bits
+						double fileBits = fileSlices.GetMeta()->fileSize * 8.0;
+						// Calculate transfer speed megabits per second
+						double transferSpeedMbps = (fileBits / 1000000.0) / transferSeconds;
+
+						printf("Transfer completed!\n");
+						printf("Time taken: %.3f seconds\n", transferSeconds);
+						printf("Speed: %.2f Mbps\n", transferSpeedMbps);
+
 						fileSlices.Save();
 						saved = true;
 					}

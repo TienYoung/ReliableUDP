@@ -38,4 +38,9 @@ struct PacketSlice
 };
 #pragma pack(pop)
 
+struct FileMetadata {
+    char filename[MAX_FILENAME_LENGTH];
+    uint32_t filesize;
+};
+
 #endif
