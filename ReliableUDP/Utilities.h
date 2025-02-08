@@ -4,9 +4,11 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <cstdio>
 #include <chrono>
 
 #include "Protocol.h"
+#include "md5.h"
 
 class FileSlices
 {
@@ -30,7 +32,9 @@ public:
 		strcpy_s(m_meta.filename, MAX_FILENAME_LENGTH, filename);
 		m_meta.fileSize = file.tellg();
 
-		//m_meta.md5 = ;
+		FILE* source = fopen(filename, "rb");
+		md5File(source, m_meta.md5);
+		fclose(source);
 
 		file.seekg(0, std::ios::beg);
 
