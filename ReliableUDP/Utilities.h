@@ -31,7 +31,8 @@ public:
 		strcpy_s(m_meta.filename, MAX_FILENAME_LENGTH, filename);
 		m_meta.fileSize = file.tellg();
 
-		FILE* source = fopen(filename, "rb");
+		FILE* source = nullptr;
+		fopen_s(&source, filename, "rb");
 		md5File(source, m_meta.md5);
 		fclose(source);
 
@@ -51,12 +52,30 @@ public:
 		return true;
 	}
 
-	bool Verify() const
+	bool Verify()
 	{
-		// Check
-		// m_meta.md5;
+		MD5Context ctx;
+		md5Init(&ctx);
 
-		return true;
+		for (size_t i = 0; i < m_slices.size(); i++)
+		{
+			size_t size = DATA_SIZE;
+			if (i == m_meta.totalSlices - 1)
+			{
+				size = m_meta.fileSize - DATA_SIZE * (m_meta.totalSlices - 1);
+			}
+			md5Update(&ctx, reinterpret_cast<uint8_t*>(m_slices[i].data), size);
+		}
+		md5Finalize(&ctx);
+
+		if (memcmp(m_meta.md5, ctx.digest, MD5_HASH_LENGTH) == 0)
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
 	}
 
 	bool Save(const char* filename = nullptr) const
