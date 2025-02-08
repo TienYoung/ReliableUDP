@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "Net.h"
-#include "Protocol.h"
+#include "Utilities.h"
 
 #pragma warning(disable: 4996)
 
@@ -196,6 +196,9 @@ int main(int argc, char* argv[])
 
 	FlowControl flowControl;
 
+	FileSlices fileSlices;
+	bool fileLoaded = false;
+
 	while (true)
 	{
 		// update flow control
@@ -218,6 +221,11 @@ int main(int argc, char* argv[])
 		{
 			printf("client connected to server\n");
 			connected = true;
+			// A1: Breaking the file in pieces to send
+			if (mode == Client)
+			{
+				fileLoaded = fileSlices.Load("./Smiley.png");
+			}
 		}
 
 		if (!connected && connection.ConnectFailed())
@@ -226,25 +234,7 @@ int main(int argc, char* argv[])
 			break;
 		}
 		// TODO: Sending file metadata
-		if (mode == Client && connection.IsConnected() && !flowControl.metadata_sent)
-		{
-			unsigned char packet[PacketSize];
-			PacketHeader header;
-			FileMetadata file_meta;
-
-			header.sequence = 0;
-			header.length = sizeof(FileMetadata);
-			header.flags = FILE_INFO;
-
-			memcpy(packet, &header, sizeof(PacketHeader));
-			memcpy(packet + sizeof(PacketHeader), &file_meta, sizeof(FileMetadata));
-
-			if (connection.SendPacket(packet, sizeof(PacketHeader) + sizeof(FileMetadata))) {
-				flowControl.metadata_sent = true;
-				printf("File metadata sent\n");
-			}
-		}
-
+		
 		// TODO: Breaking the file in pieces to send
 		
 		// send and receive packets
@@ -253,11 +243,29 @@ int main(int argc, char* argv[])
 
 		while (sendAccumulator > 1.0f / sendRate)
 		{
-			// TODO: Sending the pieces
+			// A1: Sending the pieces
 			unsigned char packet[PacketSize];
 			memset(packet, 0, sizeof(packet));
 			static int n = 0;
-			sprintf_s((char*)packet, PacketSize, "Hello World %d\n", ++n);
+			//sprintf_s((char*)packet, PacketSize, "Hello World %d\n", ++n);
+			if (mode == Client && fileLoaded)
+			{
+				static bool metaSent = false;
+				if (metaSent == false)
+				{
+					printf("Sending %s, %lld bytes, %lld in total slices.\n", fileSlices.GetMeta()->filename, fileSlices.GetMeta()->fileSize, fileSlices.GetMeta()->totalSlices);
+					memcpy(packet, fileSlices.GetMeta(), PacketSize);
+					metaSent = true;
+				}
+				else
+				{
+					if (n < fileSlices.GetTotal())
+					{
+						printf("Sending %lld/%lld\n", fileSlices.GetSlice(n)->id + 1, fileSlices.GetMeta()->totalSlices);
+						memcpy(packet, fileSlices.GetSlice(n++), PacketSize);
+					}
+				}
+			}
 			connection.SendPacket(packet, sizeof(packet));
 			sendAccumulator -= 1.0f / sendRate;
 		}
@@ -274,7 +282,25 @@ int main(int argc, char* argv[])
 
 			if (bytes_read == 0)
 				break;
-			printf("%s", packet);
+			//printf("%s", packet);
+			if (mode == Server)
+			{
+				if (!fileSlices.IsRead())
+				{
+					printf("Receiving!\n");
+					fileSlices.Deserialize(packet);
+				}
+				else
+				{
+					static bool saved = false;
+					if (!saved && fileSlices.Verify())
+					{
+						printf("Completed!\n");
+						fileSlices.Save();
+						saved = true;
+					}
+				}
+			}
 		}
 
 		// show packets that were acked this frame
