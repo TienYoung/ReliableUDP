@@ -1,3 +1,6 @@
+// Auther: Zunawe
+// URL: https://github.com/Zunawe/md5-c
+
 #ifndef MD5_H
 #define MD5_H
 
