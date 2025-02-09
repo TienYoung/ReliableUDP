@@ -109,6 +109,14 @@ public:
 		}
 		else
 		{
+			char expectedMD5[MD5_HASH_LENGTH * 2 + 1] = "";
+			char receivedMD5[MD5_HASH_LENGTH * 2 + 1] = "";
+			for (int i = 0; i < 16; ++i) {
+				sprintf_s(expectedMD5 + i * 2, 3, "%02x", m_meta.md5[i]);
+				sprintf_s(receivedMD5 + i * 2, 3, "%02x", ctx.digest[i]);
+			}
+			std::cerr << std::format("Error: File integrity check failed!\n")
+				<< std::format("Expected MD5: {}\nReceived MD5: {}", expectedMD5, receivedMD5);
 			return false;
 		}
 	}

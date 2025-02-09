@@ -13,6 +13,7 @@
 #include "Utilities.h"
 
 //#define SHOW_ACKS
+//#define MD5_TEST
 
 using namespace std;
 using namespace net;
@@ -282,6 +283,9 @@ int main(int argc, char* argv[])
 					{
 						std::cout << std::format("Sending {}/{}\n", fileSlices.GetSlice(n)->id + 1, fileSlices.GetMeta()->totalSlices);
 						memcpy(packet, fileSlices.GetSlice(n++), PacketSize);
+#ifdef MD5_TEST
+						packet[200] = 33;
+#endif
 					}
 					else
 					{
@@ -335,9 +339,9 @@ int main(int argc, char* argv[])
 						printf("Speed: %.2f Mbps\n", transferSpeedMbps);
 
 						fileSlices.Save();
-						
-						fileSlices.Reset();
 					}
+
+					fileSlices.Reset();
 				}
 			}
 		}
