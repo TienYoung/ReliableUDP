@@ -154,14 +154,7 @@ int main(int argc, char* argv[])
 		if (argc >= 3)
 		{
 			// A1: Retrieving the file from disk
-			std::string filename(argv[2]);
-
-			const std::string invalidChars = "\\/:*?\"<>|";
-			if (filename.find_first_of(invalidChars) != std::string::npos)
-			{
-				std::cerr << "Error: Filename contains invalid characters" << std::endl;
-				return EXIT_FAILURE;
-			}
+			filename = argv[2];
 
 			if (!std::filesystem::exists(filename))
 			{
@@ -169,12 +162,12 @@ int main(int argc, char* argv[])
 				return EXIT_FAILURE;
 			}
 
-			std::cerr << "Selected file for transfer:" << filename << std::endl;
+			std::cout << "Selected file for transfer:" << filename << std::endl;
 		}
 		else
 		{
 			std::cerr << "Error: Missing filename" << std::endl;
-			std::cerr << "Usage: " << argv[0] << " <ip_address> <filename>" << std::endl;
+			std::cout << "Usage: " << argv[0] << " <ip_address> <filename>" << std::endl;
 			return EXIT_FAILURE;
 		}
 	}
