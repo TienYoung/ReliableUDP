@@ -136,31 +136,49 @@ int main(int argc, char* argv[])
 	// A1: Retrieving additional command line arguments
 	if (argc >= 2)
 	{
-		int a, b, c, d;
-		if (sscanf_s(argv[1], "%d.%d.%d.%d", &a, &b, &c, &d))
+		int a, b, c, d, p;
+		// Check if the IP address was provided
+		int augNum = sscanf_s(argv[1], "%d.%d.%d.%d:%d", &a, &b, &c, &d, &p);
+		if (augNum == 5)
+		{
+			mode = Client;
+			address = Address(a, b, c, d, p);
+		}
+		else if (augNum == 4)
 		{
 			mode = Client;
 			address = Address(a, b, c, d, ServerPort);
+		}
+		else
+		{
+			std::cerr << "Error: Invalid IP address format. Please use format: xxx.xxx.xxx.xxx" << std::endl;
+			return EXIT_FAILURE;
+		}
 
-			// Check if the filename was provided
-			if (argc >= 3)
-			{
-				// A1: Retrieving the file from disk
-				filename = argv[2];
-				if (!std::filesystem::exists(filename))
-				{
-					std::cerr << "Error: Could not open file" << filename << std::endl;
-					return EXIT_FAILURE;
-				}
+		if (a < 0 || a > 255 || b < 0 || b > 255 || c < 0 || c > 255 || d < 0 || d > 255)
+		{
+			std::cerr << "Error: Invalid IP address format. Please use format: xxx.xxx.xxx.xxx" << std::endl;
+			return EXIT_FAILURE;
+		}
 
-				std::cerr << "Selected file for transfer:" << filename << std::endl;
-			}
-			else
+		// Check if the filename was provided
+		if (argc >= 3)
+		{
+			// A1: Retrieving the file from disk
+			filename = argv[2];
+			if (!std::filesystem::exists(filename))
 			{
-				std::cerr << "Error: Missing filename" << std::endl;
-				std::cerr << "Usage: " << argv[0] << " <ip_address> <filename>" << std::endl;
+				std::cerr << "Error: Could not open file" << filename << std::endl;
 				return EXIT_FAILURE;
 			}
+
+			std::cout << "Selected file for transfer:" << filename << std::endl;
+		}
+		else
+		{
+			std::cerr << "Error: Missing filename" << std::endl;
+			std::cout << "Usage: " << argv[0] << " <ip_address> <filename>" << std::endl;
+			return EXIT_FAILURE;
 		}
 	}
 
