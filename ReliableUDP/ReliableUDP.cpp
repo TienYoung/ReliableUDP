@@ -305,13 +305,13 @@ int main(int argc, char* argv[])
 			//printf("%s", packet);
 			if (mode == Server)
 			{
-				if (!fileSlices.IsRead())
+				if (!fileSlices.IsReady())
 				{
 					printf("Receiving!\n");
-					fileSlices.Deserialize(packet);
+					bool gotSlice = fileSlices.Deserialize(packet);
 
 					// Record the start time of receiving
-					if (!transferStarted) {
+					if (!transferStarted && gotSlice) {
 						transferStartTime = std::chrono::high_resolution_clock::now();
 						transferStarted = true;
 					}
@@ -319,8 +319,7 @@ int main(int argc, char* argv[])
 				else
 				{
 					// A1: Verifying the file integrity
-					static bool saved = false;
-					if (!saved && fileSlices.Verify())
+					if (fileSlices.Verify())
 					{
 						auto transferEndTime = std::chrono::high_resolution_clock::now();
 						auto transferDuration = std::chrono::duration_cast<std::chrono::milliseconds>(transferEndTime - transferStartTime);
@@ -336,7 +335,8 @@ int main(int argc, char* argv[])
 						printf("Speed: %.2f Mbps\n", transferSpeedMbps);
 
 						fileSlices.Save();
-						saved = true;
+						
+						fileSlices.Reset();
 					}
 				}
 			}

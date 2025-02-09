@@ -103,7 +103,14 @@ public:
 		return true;
 	}
 
-	bool IsRead() const
+	void Reset()
+	{
+		m_ready = false;
+		m_meta = { 0 };
+		m_slices.clear();
+	}
+
+	bool IsReady() const
 	{
 		return m_ready;
 	}
@@ -129,7 +136,7 @@ public:
 		return &m_slices[id];
 	}
 
-	void Deserialize(const unsigned char* data)
+	bool Deserialize(const unsigned char* data)
 	{
 		PacketType typeFlag = static_cast<PacketType>(data[0]);
 		// A1: Receiving the file metadata
@@ -143,6 +150,8 @@ public:
 			memcpy(m_meta.md5, meta->md5, MD5_HASH_LENGTH);
 
 			m_slices.resize(m_meta.totalSlices);
+
+			return true;
 		}
 		// A1: Receiving the file pieces
 		else if (typeFlag == TYPE_DATA)
@@ -157,7 +166,11 @@ public:
 			{
 				m_ready = true;
 			}
+
+			return true;
 		}
+
+		return false;
 	}
 
 private:
