@@ -137,30 +137,45 @@ int main(int argc, char* argv[])
 	if (argc >= 2)
 	{
 		int a, b, c, d;
+		// Check if the IP address was provided
 		if (sscanf_s(argv[1], "%d.%d.%d.%d", &a, &b, &c, &d))
 		{
 			mode = Client;
 			address = Address(a, b, c, d, ServerPort);
+		}
 
-			// Check if the filename was provided
-			if (argc >= 3)
-			{
-				// A1: Retrieving the file from disk
-				filename = argv[2];
-				if (!std::filesystem::exists(filename))
-				{
-					std::cerr << "Error: Could not open file" << filename << std::endl;
-					return EXIT_FAILURE;
-				}
+		if (a < 0 || a > 255 || b < 0 || b > 255 || c < 0 || c > 255 || d < 0 || d > 255)
+		{
+			std::cerr << "Error: Invalid IP address format. Please use format: xxx.xxx.xxx.xxx" << std::endl;
+			return EXIT_FAILURE;
+		}
 
-				std::cerr << "Selected file for transfer:" << filename << std::endl;
-			}
-			else
+		// Check if the filename was provided
+		if (argc >= 3)
+		{
+			// A1: Retrieving the file from disk
+			std::string filename(argv[2]);
+
+			const std::string invalidChars = "\\/:*?\"<>|";
+			if (filename.find_first_of(invalidChars) != std::string::npos)
 			{
-				std::cerr << "Error: Missing filename" << std::endl;
-				std::cerr << "Usage: " << argv[0] << " <ip_address> <filename>" << std::endl;
+				std::cerr << "Error: Filename contains invalid characters" << std::endl;
 				return EXIT_FAILURE;
 			}
+
+			if (!std::filesystem::exists(filename))
+			{
+				std::cerr << "Error: Could not open file" << filename << std::endl;
+				return EXIT_FAILURE;
+			}
+
+			std::cerr << "Selected file for transfer:" << filename << std::endl;
+		}
+		else
+		{
+			std::cerr << "Error: Missing filename" << std::endl;
+			std::cerr << "Usage: " << argv[0] << " <ip_address> <filename>" << std::endl;
+			return EXIT_FAILURE;
 		}
 	}
 
